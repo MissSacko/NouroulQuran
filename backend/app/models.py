@@ -1,0 +1,443 @@
+from datetime import datetime
+
+from .extensions import db
+
+
+class TimestampMixin:
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )
+
+
+class Series(TimestampMixin, db.Model):
+    __tablename__ = "series"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    slug = db.Column(
+        db.String(150),
+        unique=True,
+        nullable=False,
+    )
+
+    title = db.Column(
+        db.String(255),
+        nullable=False,
+    )
+
+    subtitle = db.Column(
+        db.String(500),
+        nullable=True,
+    )
+
+    description = db.Column(
+        db.Text,
+        nullable=True,
+    )
+
+    category = db.Column(
+        db.String(150),
+        nullable=True,
+    )
+
+    cover_image = db.Column(
+        db.String(500),
+        nullable=True,
+    )
+
+    is_published = db.Column(
+        db.Boolean,
+        default=True,
+        nullable=False,
+    )
+
+    soirees = db.relationship(
+        "Soiree",
+        back_populates="series",
+        lazy=True,
+    )
+
+    def to_dict(self, include_soirees=False):
+        data = {
+            "id": self.id,
+            "slug": self.slug,
+            "title": self.title,
+            "subtitle": self.subtitle,
+            "description": self.description,
+            "category": self.category,
+            "cover_image": self.cover_image,
+            "is_published": self.is_published,
+        }
+
+        if include_soirees:
+            data["soirees"] = [
+                soiree.to_dict()
+                for soiree in self.soirees
+                if soiree.is_published
+            ]
+
+        return data
+
+
+class Soiree(TimestampMixin, db.Model):
+    __tablename__ = "soirees"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    slug = db.Column(
+        db.String(150),
+        unique=True,
+        nullable=False,
+    )
+
+    title = db.Column(
+        db.String(255),
+        nullable=False,
+    )
+
+    subtitle = db.Column(
+        db.String(500),
+        nullable=True,
+    )
+
+    date = db.Column(
+        db.Date,
+        nullable=True,
+    )
+
+    speaker = db.Column(
+        db.String(255),
+        nullable=True,
+    )
+
+    category = db.Column(
+        db.String(150),
+        nullable=True,
+    )
+
+    summary = db.Column(
+        db.Text,
+        nullable=True,
+    )
+
+    description = db.Column(
+        db.Text,
+        nullable=True,
+    )
+
+    cover_image = db.Column(
+        db.String(500),
+        nullable=True,
+    )
+
+    is_published = db.Column(
+        db.Boolean,
+        default=True,
+        nullable=False,
+    )
+
+    # Relation avec une série
+    series_id = db.Column(
+        db.Integer,
+        db.ForeignKey("series.id"),
+        nullable=True,
+    )
+
+    series = db.relationship(
+        "Series",
+        back_populates="soirees",
+    )
+
+    # Médias
+    media = db.relationship(
+        "Media",
+        back_populates="soiree",
+        cascade="all, delete-orphan",
+    )
+
+    def to_dict(self, include_media=False):
+        data = {
+            "id": self.id,
+            "slug": self.slug,
+            "title": self.title,
+            "subtitle": self.subtitle,
+            "date": self.date.isoformat() if self.date else None,
+            "speaker": self.speaker,
+            "category": self.category,
+            "summary": self.summary,
+            "description": self.description,
+            "cover_image": self.cover_image,
+            "is_published": self.is_published,
+            "series": (
+                {
+                    "id": self.series.id,
+                    "slug": self.series.slug,
+                    "title": self.series.title,
+                }
+                if self.series
+                else None
+            ),
+        }
+
+        if include_media:
+            data["media"] = [
+                item.to_dict()
+                for item in self.media
+            ]
+
+        return data
+
+
+class Surah(TimestampMixin, db.Model):
+    __tablename__ = "surahs"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    number = db.Column(
+        db.Integer,
+        unique=True,
+        nullable=False,
+    )
+
+    name = db.Column(
+        db.String(150),
+        unique=True,
+        nullable=False,
+    )
+
+    verse_count = db.Column(
+        db.Integer,
+        nullable=True,
+    )
+
+    revelation_order = db.Column(
+        db.Integer,
+        nullable=True,
+    )
+
+    revelation_type = db.Column(
+        db.String(50),
+        nullable=True,
+    )
+
+    appellation_reason = db.Column(
+        db.Text,
+        nullable=True,
+    )
+
+    tafsirs = db.relationship(
+        "Tafsir",
+        back_populates="surah",
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "number": self.number,
+            "name": self.name,
+            "verse_count": self.verse_count,
+            "revelation_order": self.revelation_order,
+            "revelation_type": self.revelation_type,
+            "appellation_reason": self.appellation_reason,
+        }
+
+
+class Tafsir(TimestampMixin, db.Model):
+    __tablename__ = "tafsirs"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    slug = db.Column(
+        db.String(150),
+        unique=True,
+        nullable=False,
+    )
+
+    date = db.Column(
+        db.Date,
+        nullable=True,
+    )
+
+    intervenant = db.Column(
+        db.String(255),
+        nullable=True,
+    )
+
+    organisateur = db.Column(
+        db.String(255),
+        nullable=True,
+    )
+
+    lieu = db.Column(
+        db.String(255),
+        nullable=True,
+    )
+
+    mosquee = db.Column(
+        db.String(255),
+        nullable=True,
+    )
+
+    description = db.Column(
+        db.Text,
+        nullable=True,
+    )
+
+    # Contenu du Tafsir
+    contexte_revelation = db.Column(
+        db.Text,
+        nullable=True,
+    )
+
+    themes_principaux = db.Column(
+        db.JSON,
+        nullable=True,
+    )
+
+    termes_cles = db.Column(
+        db.JSON,
+        nullable=True,
+    )
+
+    explication = db.Column(
+        db.Text,
+        nullable=True,
+    )
+
+    lecons_pratiques = db.Column(
+        db.JSON,
+        nullable=True,
+    )
+
+    is_published = db.Column(
+        db.Boolean,
+        default=True,
+        nullable=False,
+    )
+
+    surah_id = db.Column(
+        db.Integer,
+        db.ForeignKey("surahs.id"),
+        nullable=True,
+    )
+
+    surah = db.relationship(
+        "Surah",
+        back_populates="tafsirs",
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "slug": self.slug,
+            "date": self.date.isoformat() if self.date else None,
+            "intervenant": self.intervenant,
+            "organisateur": self.organisateur,
+            "lieu": self.lieu,
+            "mosquee": self.mosquee,
+            "description": self.description,
+            "contexte_revelation": self.contexte_revelation,
+            "themes_principaux": self.themes_principaux or [],
+            "termes_cles": self.termes_cles or [],
+            "explication": self.explication,
+            "lecons_pratiques": self.lecons_pratiques or [],
+            "is_published": self.is_published,
+            "surah": self.surah.to_dict() if self.surah else None,
+        }
+
+
+class Media(TimestampMixin, db.Model):
+    __tablename__ = "media"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    title = db.Column(
+        db.String(255),
+        nullable=True,
+    )
+
+    media_type = db.Column(
+        db.String(50),
+        nullable=False,
+    )
+
+    url = db.Column(
+        db.String(1000),
+        nullable=False,
+    )
+
+    thumbnail = db.Column(
+        db.String(1000),
+        nullable=True,
+    )
+
+    soiree_id = db.Column(
+        db.Integer,
+        db.ForeignKey("soirees.id"),
+        nullable=True,
+    )
+
+    soiree = db.relationship(
+        "Soiree",
+        back_populates="media",
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "media_type": self.media_type,
+            "url": self.url,
+            "thumbnail": self.thumbnail,
+        }
+
+
+class ContactSubmission(TimestampMixin, db.Model):
+    __tablename__ = "contact_submissions"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    name = db.Column(
+        db.String(255),
+        nullable=False,
+    )
+
+    email = db.Column(
+        db.String(255),
+        nullable=True,
+    )
+
+    phone = db.Column(
+        db.String(50),
+        nullable=True,
+    )
+
+    message = db.Column(
+        db.Text,
+        nullable=False,
+    )
+
+    is_processed = db.Column(
+        db.Boolean,
+        default=False,
+        nullable=False,
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "email": self.email,
+            "phone": self.phone,
+            "message": self.message,
+            "is_processed": self.is_processed,
+        }
