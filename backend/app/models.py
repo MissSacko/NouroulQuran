@@ -1,7 +1,12 @@
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from .extensions import db
 
+
+# ============================================================
+# TIMESTAMPS
+# ============================================================
 
 class TimestampMixin:
     created_at = db.Column(
@@ -17,6 +22,67 @@ class TimestampMixin:
         nullable=False,
     )
 
+
+# ============================================================
+# USERS
+# ============================================================
+
+class User(TimestampMixin, db.Model):
+    __tablename__ = "users"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    name = db.Column(
+        db.String(255),
+        nullable=False,
+    )
+
+    email = db.Column(
+        db.String(255),
+        unique=True,
+        nullable=False,
+        index=True,
+    )
+
+    password_hash = db.Column(
+        db.String(255),
+        nullable=False,
+    )
+
+    role = db.Column(
+        db.String(50),
+        default="editor",
+        nullable=False,
+    )
+
+    is_active = db.Column(
+        db.Boolean,
+        default=True,
+        nullable=False,
+    )
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(
+            self.password_hash,
+            password,
+        )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "email": self.email,
+            "role": self.role,
+            "is_active": self.is_active,
+        }
+
+
+# ============================================================
+# SERIES
+# ============================================================
 
 class Series(TimestampMixin, db.Model):
     __tablename__ = "series"
@@ -49,8 +115,9 @@ class Series(TimestampMixin, db.Model):
         nullable=True,
     )
 
+    # URL MinIO / AWS S3
     cover_image = db.Column(
-        db.String(500),
+        db.String(1000),
         nullable=True,
     )
 
@@ -88,10 +155,21 @@ class Series(TimestampMixin, db.Model):
         return data
 
 
+# ============================================================
+# SOIRÉES
+# ============================================================
+
 class Soiree(TimestampMixin, db.Model):
     __tablename__ = "soirees"
 
     id = db.Column(db.Integer, primary_key=True)
+
+    # Numéro éditorial : 1, 2, 3... 22...
+    number = db.Column(
+        db.Integer,
+        unique=True,
+        nullable=True,
+    )
 
     slug = db.Column(
         db.String(150),
@@ -134,8 +212,9 @@ class Soiree(TimestampMixin, db.Model):
         nullable=True,
     )
 
+    # URL de l'affiche dans MinIO / AWS S3
     cover_image = db.Column(
-        db.String(500),
+        db.String(1000),
         nullable=True,
     )
 
@@ -167,6 +246,7 @@ class Soiree(TimestampMixin, db.Model):
     def to_dict(self, include_media=False):
         data = {
             "id": self.id,
+            "number": self.number,
             "slug": self.slug,
             "title": self.title,
             "subtitle": self.subtitle,
@@ -196,6 +276,10 @@ class Soiree(TimestampMixin, db.Model):
 
         return data
 
+
+# ============================================================
+# SOURATES
+# ============================================================
 
 class Surah(TimestampMixin, db.Model):
     __tablename__ = "surahs"
@@ -251,6 +335,10 @@ class Surah(TimestampMixin, db.Model):
         }
 
 
+# ============================================================
+# TAFSIR
+# ============================================================
+
 class Tafsir(TimestampMixin, db.Model):
     __tablename__ = "tafsirs"
 
@@ -292,7 +380,6 @@ class Tafsir(TimestampMixin, db.Model):
         nullable=True,
     )
 
-    # Contenu du Tafsir
     contexte_revelation = db.Column(
         db.Text,
         nullable=True,
@@ -318,6 +405,12 @@ class Tafsir(TimestampMixin, db.Model):
         nullable=True,
     )
 
+    # URL éventuelle d'une image/affiche
+    cover_image = db.Column(
+        db.String(1000),
+        nullable=True,
+    )
+
     is_published = db.Column(
         db.Boolean,
         default=True,
@@ -335,6 +428,12 @@ class Tafsir(TimestampMixin, db.Model):
         back_populates="tafsirs",
     )
 
+    media = db.relationship(
+        "Media",
+        back_populates="tafsir",
+        cascade="all, delete-orphan",
+    )
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -350,10 +449,115 @@ class Tafsir(TimestampMixin, db.Model):
             "termes_cles": self.termes_cles or [],
             "explication": self.explication,
             "lecons_pratiques": self.lecons_pratiques or [],
+            "cover_image": self.cover_image,
             "is_published": self.is_published,
             "surah": self.surah.to_dict() if self.surah else None,
         }
 
+
+# ============================================================
+# EVENTS
+# ============================================================
+
+class Event(TimestampMixin, db.Model):
+    __tablename__ = "events"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    slug = db.Column(
+        db.String(150),
+        unique=True,
+        nullable=False,
+    )
+
+    title = db.Column(
+        db.String(255),
+        nullable=False,
+    )
+
+    description = db.Column(
+        db.Text,
+        nullable=True,
+    )
+
+    date = db.Column(
+        db.Date,
+        nullable=False,
+    )
+
+    start_time = db.Column(
+        db.Time,
+        nullable=True,
+    )
+
+    end_time = db.Column(
+        db.Time,
+        nullable=True,
+    )
+
+    location = db.Column(
+        db.String(500),
+        nullable=True,
+    )
+
+    # URL de l'affiche dans MinIO / AWS S3
+    cover_image = db.Column(
+        db.String(1000),
+        nullable=True,
+    )
+
+    registration_enabled = db.Column(
+        db.Boolean,
+        default=False,
+        nullable=False,
+    )
+
+    registration_url = db.Column(
+        db.String(1000),
+        nullable=True,
+    )
+
+    countdown_enabled = db.Column(
+        db.Boolean,
+        default=False,
+        nullable=False,
+    )
+
+    is_published = db.Column(
+        db.Boolean,
+        default=True,
+        nullable=False,
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "slug": self.slug,
+            "title": self.title,
+            "description": self.description,
+            "date": self.date.isoformat() if self.date else None,
+            "start_time": (
+                self.start_time.strftime("%H:%M")
+                if self.start_time
+                else None
+            ),
+            "end_time": (
+                self.end_time.strftime("%H:%M")
+                if self.end_time
+                else None
+            ),
+            "location": self.location,
+            "cover_image": self.cover_image,
+            "registration_enabled": self.registration_enabled,
+            "registration_url": self.registration_url,
+            "countdown_enabled": self.countdown_enabled,
+            "is_published": self.is_published,
+        }
+
+
+# ============================================================
+# MEDIA
+# ============================================================
 
 class Media(TimestampMixin, db.Model):
     __tablename__ = "media"
@@ -370,6 +574,7 @@ class Media(TimestampMixin, db.Model):
         nullable=False,
     )
 
+    # URL MinIO / AWS S3 / YouTube / autre
     url = db.Column(
         db.String(1000),
         nullable=False,
@@ -386,9 +591,30 @@ class Media(TimestampMixin, db.Model):
         nullable=True,
     )
 
+    tafsir_id = db.Column(
+        db.Integer,
+        db.ForeignKey("tafsirs.id"),
+        nullable=True,
+    )
+
+    event_id = db.Column(
+        db.Integer,
+        db.ForeignKey("events.id"),
+        nullable=True,
+    )
+
     soiree = db.relationship(
         "Soiree",
         back_populates="media",
+    )
+
+    tafsir = db.relationship(
+        "Tafsir",
+        back_populates="media",
+    )
+
+    event = db.relationship(
+        "Event",
     )
 
     def to_dict(self):
@@ -400,6 +626,10 @@ class Media(TimestampMixin, db.Model):
             "thumbnail": self.thumbnail,
         }
 
+
+# ============================================================
+# CONTACT
+# ============================================================
 
 class ContactSubmission(TimestampMixin, db.Model):
     __tablename__ = "contact_submissions"

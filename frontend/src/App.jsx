@@ -34,13 +34,23 @@ export default function App() {
       <ScrollManager />
       <Navbar />
       <Routes>
+        {/* Accueil */}
         <Route path="/" element={<Home />} />
+
+         {/* Soirées */}
         <Route path="/soirees" element={<Soirees />} />
         <Route path="/soirees/:slug" element={<SoireeDetail />} />
+
+
+        {/* Séries */}
         <Route path="/series" element={<Series />} />
         <Route path="/series/:slug" element={<SerieDetail />} />
+
+        {/* Tafsir */}
         <Route path="/tafsir" element={<Tafsir />} />
         <Route path="/tafsir/:slug" element={<TafsirDetail />} />
+
+        
       </Routes>
       <Footer />
     </>
