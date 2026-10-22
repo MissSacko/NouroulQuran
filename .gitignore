@@ -1,0 +1,16 @@
+# Environnement Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Dépendances JavaScript
+node_modules/
+
+# Fichiers générés par Vite
+.vite/
+
+# Variables d'environnement
+.env
+.env.*
+!.env.example

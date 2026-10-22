@@ -9,6 +9,10 @@ import Series from './pages/Series'
 import SerieDetail from './pages/SerieDetail'
 import Tafsir from './pages/Tafsir'
 import TafsirDetail from './pages/TafsirDetail'
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminLogin from "./pages/admin/AdminLogin";
+
+import AdminSoirees from "./pages/admin/AdminSoirees";
 
 function ScrollManager() {
   const { pathname, hash } = useLocation()
@@ -50,6 +54,13 @@ export default function App() {
         <Route path="/tafsir" element={<Tafsir />} />
         <Route path="/tafsir/:slug" element={<TafsirDetail />} />
 
+        <Route path="/admin/dashboard" element={<AdminDashboard />}/>
+
+        <Route path="/admin/login" element={<AdminLogin />}/>
+
+        
+
+        <Route path="/admin/soirees" element={<AdminSoirees />}/>
         
       </Routes>
       <Footer />

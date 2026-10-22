@@ -4,6 +4,7 @@ import FilterBar from '../components/FilterBar'
 import SessionCard from '../components/SessionCard'
 import { getSoirees, getSeries } from '../services/api'
 
+
 export default function Soirees() {
   const [soirees, setSoirees] = useState([])
   const [series, setSeries] = useState([])
