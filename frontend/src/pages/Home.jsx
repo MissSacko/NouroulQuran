@@ -21,7 +21,7 @@ export default function Home() {
         <SoireesPreview />
         <SeriesPreview />
         <GallerySection />
-        <TeamSection />
+     
         <ContactSection />
       </main>
     </>

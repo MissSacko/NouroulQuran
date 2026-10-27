@@ -1036,3 +1036,115 @@
   }
 
 }
+
+/* =========================================
+   NOUROUL QUR'AN — CARTES TAFSIR
+========================================= */
+
+.tafsir-grid {
+  align-items: stretch;
+}
+
+.tafsir-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 26px;
+  background: #fffdf8;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  transition: transform .25s ease, box-shadow .25s ease,
+    border-color .25s ease;
+}
+
+.tafsir-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(197, 160, 62, .65);
+  box-shadow: var(--shadow);
+}
+
+.tafsir-card-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.tafsir-number {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--brown);
+  font-size: .67rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+
+.tafsir-card .tag {
+  padding: 6px 10px;
+  background: rgba(197, 160, 62, .12);
+  border-radius: 30px;
+  font-size: .72rem;
+}
+
+.tafsir-card h3 {
+  margin: 0 0 12px;
+  color: var(--deep);
+  font-size: 1.45rem;
+  line-height: 1.3;
+}
+
+.tafsir-speaker {
+  margin: 0 0 20px;
+  color: var(--emerald);
+  font-weight: 700;
+  font-size: .9rem;
+}
+
+.tafsir-meta {
+  display: grid;
+  gap: 10px;
+  margin-top: auto;
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: .8rem;
+}
+
+.tafsir-meta span {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  line-height: 1.5;
+}
+
+.tafsir-meta svg {
+  flex-shrink: 0;
+  color: var(--gold);
+  margin-top: 2px;
+}
+
+.tafsir-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--emerald);
+  font-size: .86rem;
+  font-weight: 800;
+}
+
+.tafsir-link:hover {
+  color: var(--brown);
+}
+
+@media (max-width: 600px) {
+  .tafsir-card {
+    padding: 21px;
+  }
+}

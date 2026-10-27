@@ -1,26 +1,119 @@
+
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getTafsirBySlug } from "../data/tafsir";
+import {
+  ArrowLeft,
+  BookOpen,
+  CalendarDays,
+  MapPin,
+  UserRound,
+  Landmark,
+  BookMarked,
+} from "lucide-react";
+import { getTafsirBySlug } from "../services/api";
 import PageHeaderr from "../components/PageHeaderr";
+
+function formatDate(value) {
+  if (!value) return "Non renseignée";
+
+  const date = new Date(`${value}T12:00:00`);
+
+  if (Number.isNaN(date.getTime())) return value;
+
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+function DetailBlock({ number, title, children }) {
+  return (
+    <article className="detail-block">
+      <span className="detail-number">{number}</span>
+      <div className="detail-block-content">
+        <h2>{title}</h2>
+        <div className="detail-text">{children}</div>
+      </div>
+    </article>
+  );
+}
+
+function EmptyContent({ children }) {
+  return <p className="empty-content">{children}</p>;
+}
 
 export default function TafsirDetail() {
   const { slug } = useParams();
 
-  const tafsir = getTafsirBySlug(slug);
+  const [tafsir, setTafsir] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // Si aucun Tafsir ne correspond au slug
-  if (!tafsir) {
+  useEffect(() => {
+    let active = true;
+
+    async function loadTafsir() {
+      setLoading(true);
+      setError("");
+
+      try {
+        const data = await getTafsirBySlug(slug);
+
+        if (active) {
+          setTafsir(data);
+        }
+      } catch (err) {
+        if (active) {
+          setError(
+            "Impossible de charger cette séance. Vérifie ta connexion au serveur."
+          );
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    loadTafsir();
+
+    return () => {
+      active = false;
+    };
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="page">
+        <PageHeaderr
+          eyebrow="Nouroul Qur’An"
+          title="Chargement du Tafsir"
+          description="Nous préparons le contenu de cette séance."
+        />
+        <section className="section">
+          <div className="container">
+            <p className="empty-content">Chargement en cours…</p>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  if (error || !tafsir) {
     return (
       <div className="page">
         <PageHeaderr
           eyebrow="Tafsir"
           title="Séance introuvable"
-          description="Cette séance de Tafsir n'existe pas ou n'est plus disponible."
+          description={
+            error ||
+            "Cette séance n'existe pas ou n'est plus disponible."
+          }
         />
-
         <section className="section">
           <div className="container">
             <Link to="/tafsir" className="btn btn-primary">
-              Voir les séances de Tafsir
+              <ArrowLeft size={16} />
+              Toutes les séances de Tafsir
             </Link>
           </div>
         </section>
@@ -28,274 +121,188 @@ export default function TafsirDetail() {
     );
   }
 
-  const sourate = tafsir.sourate || {};
+  const sourate = tafsir.surah || {};
 
-  const themes = Array.isArray(tafsir.themesPrincipaux)
-    ? tafsir.themesPrincipaux
-    : [];
+  const themes = Array.isArray(tafsir.themes_principaux)
+    ? tafsir.themes_principaux
+    : Array.isArray(tafsir.themesPrincipaux)
+      ? tafsir.themesPrincipaux
+      : [];
 
-  const termes = Array.isArray(tafsir.termesCles)
-    ? tafsir.termesCles
-    : [];
+  const termes = Array.isArray(tafsir.termes_cles)
+    ? tafsir.termes_cles
+    : Array.isArray(tafsir.termesCles)
+      ? tafsir.termesCles
+      : [];
 
-  const lecons = Array.isArray(tafsir.leconsPratiques)
-    ? tafsir.leconsPratiques
-    : [];
+  const lecons = Array.isArray(tafsir.lecons_pratiques)
+    ? tafsir.lecons_pratiques
+    : Array.isArray(tafsir.leconsPratiques)
+      ? tafsir.leconsPratiques
+      : [];
+
+  const lieu = [tafsir.lieu, tafsir.mosquee]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <div className="page">
-      {/* HEADER */}
+    <div className="page tafsir-detail-page">
       <PageHeaderr
-        eyebrow="Séance de Tafsir"
-        title={sourate.nom || "Tafsir"}
-        description={tafsir.description || ""}
+        eyebrow="Nouroul Qur’An · Séance de Tafsir"
+        title={sourate.name || "Étude du Coran"}
+        description={
+          tafsir.description ||
+          "Méditons sur les versets du Coran et approfondissons leur compréhension."
+        }
       />
 
-      {/* INFORMATIONS PRINCIPALES */}
       <section className="section">
         <div className="container">
-
           <div className="detail-meta">
-
             <div className="detail-meta-item">
-              <span className="detail-meta-label">
-                Intervenant
-              </span>
-
-              <span className="detail-meta-value">
-                {tafsir.intervenant || "Non renseigné"}
+              <UserRound size={19} />
+              <span>
+                <span className="detail-meta-label">Intervenant</span>
+                <span className="detail-meta-value">
+                  {tafsir.intervenant || "Non renseigné"}
+                </span>
               </span>
             </div>
 
             <div className="detail-meta-item">
-              <span className="detail-meta-label">
-                Date
-              </span>
-
-              <span className="detail-meta-value">
-                {tafsir.date || "Non renseignée"}
-              </span>
-            </div>
-
-            <div className="detail-meta-item">
-              <span className="detail-meta-label">
-                Lieu
-              </span>
-
-              <span className="detail-meta-value">
-                {tafsir.lieu || "Non renseigné"}
+              <CalendarDays size={19} />
+              <span>
+                <span className="detail-meta-label">Date de la séance</span>
+                <span className="detail-meta-value">
+                  {formatDate(tafsir.date)}
+                </span>
               </span>
             </div>
 
             <div className="detail-meta-item">
-              <span className="detail-meta-label">
-                Mosquée
-              </span>
-
-              <span className="detail-meta-value">
-                {tafsir.mosquee || "Non renseignée"}
+              <MapPin size={19} />
+              <span>
+                <span className="detail-meta-label">Lieu</span>
+                <span className="detail-meta-value">
+                  {lieu || "Non renseigné"}
+                </span>
               </span>
             </div>
-
           </div>
-
         </div>
       </section>
 
-      {/* CONTENU DU TAFSIR */}
       <section className="section section-alt">
         <div className="container">
-
           <div className="detail-content">
+            <DetailBlock number="01" title="L’identité de la sourate">
+              <p>
+                <strong>Nom :</strong>{" "}
+                {sourate.name || "Non renseigné"}
+              </p>
 
-            {/* 1. IDENTITÉ DE LA SOURATE */}
-            <article className="detail-block">
+              <p>
+                <strong>Numéro dans le Coran :</strong>{" "}
+                {sourate.number ?? "Non renseigné"}
+              </p>
 
-              <span className="detail-number">
-                01
-              </span>
+              <p>
+                <strong>Nombre de versets :</strong>{" "}
+                {sourate.verses_count ??
+                  sourate.nombre_versets ??
+                  "Non renseigné"}
+              </p>
 
-              <div>
-                <h2>
-                  L'identité de la sourate
-                </h2>
+              <p>
+                <strong>Raison de l’appellation :</strong>{" "}
+                {sourate.raison_appellation ||
+                  "Cette information sera ajoutée prochainement."}
+              </p>
 
-                <div className="detail-text">
+              <p>
+                <strong>Ordre de révélation :</strong>{" "}
+                {sourate.ordre_revelation ||
+                  "Cette information sera ajoutée prochainement."}
+              </p>
 
-                  <p>
-                    <strong>Nom :</strong>{" "}
-                    {sourate.nom || "Non renseigné"}
-                  </p>
+              <p>
+                <strong>Type :</strong>{" "}
+                {sourate.type ||
+                  "Cette information sera ajoutée prochainement."}
+              </p>
+            </DetailBlock>
 
-                  <p>
-                    <strong>Numéro dans le Coran :</strong>{" "}
-                    {sourate.numeroCoran || "Non renseigné"}
-                  </p>
+            <DetailBlock number="02" title="Le contexte de la révélation">
+              {tafsir.contexte_revelation ||
+              tafsir.contexteRevelation ? (
+                <p>
+                  {tafsir.contexte_revelation ||
+                    tafsir.contexteRevelation}
+                </p>
+              ) : (
+                <EmptyContent>
+                  Le contexte de révélation sera ajouté prochainement.
+                </EmptyContent>
+              )}
+            </DetailBlock>
 
-                  <p>
-                    <strong>Nombre de versets :</strong>{" "}
-                    {sourate.nombreVersets || "Non renseigné"}
-                  </p>
+            <DetailBlock number="03" title="Les thèmes principaux">
+              {themes.length > 0 ? (
+                <ul className="detail-list">
+                  {themes.map((theme, index) => (
+                    <li key={index}>{theme}</li>
+                  ))}
+                </ul>
+              ) : (
+                <EmptyContent>
+                  Les principaux thèmes abordés seront ajoutés
+                  prochainement.
+                </EmptyContent>
+              )}
+            </DetailBlock>
 
-                  <p>
-                    <strong>Raison de l'appellation :</strong>{" "}
-                    {sourate.raisonAppellation ||
-                      "Cette information sera ajoutée prochainement."}
-                  </p>
-
-                  <p>
-                    <strong>Ordre de révélation :</strong>{" "}
-                    {sourate.ordreRevelation ||
-                      "Cette information sera ajoutée prochainement."}
-                  </p>
-
-                  <p>
-                    <strong>Type :</strong>{" "}
-                    {sourate.type ||
-                      "Cette information sera ajoutée prochainement."}
-                  </p>
-
-                </div>
-              </div>
-
-            </article>
-
-            {/* 2. CONTEXTE DE RÉVÉLATION */}
-            <article className="detail-block">
-
-              <span className="detail-number">
-                02
-              </span>
-
-              <div>
-                <h2>
-                  Le contexte de la révélation
-                </h2>
-
-                <div className="detail-text">
-
-                  {tafsir.contexteRevelation ? (
-                    <p>{tafsir.contexteRevelation}</p>
-                  ) : (
-                    <p className="empty-content">
-                      Le contexte de révélation de cette sourate
-                      sera ajouté prochainement.
-                    </p>
-                  )}
-
-                </div>
-              </div>
-
-            </article>
-
-            {/* 3. THÈMES PRINCIPAUX */}
-            <article className="detail-block">
-
-              <span className="detail-number">
-                03
-              </span>
-
-              <div>
-                <h2>
-                  Les thèmes principaux
-                </h2>
-
-                {themes.length > 0 ? (
-                  <ul className="detail-list">
-                    {themes.map((theme, index) => (
-                      <li key={index}>
-                        {theme}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="empty-content">
-                    Les principaux thèmes abordés seront ajoutés
-                    prochainement.
-                  </p>
-                )}
-              </div>
-
-            </article>
-
-            {/* 4. TERMES ET PASSAGES CLÉS */}
-            <article className="detail-block">
-
-              <span className="detail-number">
-                04
-              </span>
-
-              <div>
-                <h2>
-                  Explication des termes et passages clés
-                </h2>
-
-                {termes.length > 0 ? (
-                  <ul className="detail-list">
-                    {termes.map((terme, index) => (
-                      <li key={index}>
-                        {terme}
-                      </li>
-                    ))}
-                  </ul>
-                ) : tafsir.explication ? (
-                  <p className="detail-text">
-                    {tafsir.explication}
-                  </p>
-                ) : (
-                  <p className="empty-content">
-                    L'explication des termes et passages clés
-                    sera ajoutée prochainement.
-                  </p>
-                )}
-              </div>
-
-            </article>
-
-            {/* 5. LEÇONS PRATIQUES */}
-            <article className="detail-block">
-
-              <span className="detail-number">
-                05
-              </span>
-
-              <div>
-                <h2>
-                  Les leçons pratiques
-                </h2>
-
-                {lecons.length > 0 ? (
-                  <ul className="detail-list">
-                    {lecons.map((lecon, index) => (
-                      <li key={index}>
-                        {lecon}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="empty-content">
-                    Les leçons pratiques tirées de cette séance
-                    seront ajoutées prochainement.
-                  </p>
-                )}
-              </div>
-
-            </article>
-
-          </div>
-
-          {/* RETOUR À LA LISTE DES TAFSIRS */}
-          <div className="detail-footer">
-
-            <Link
-              to="/tafsir"
-              className="btn btn-secondary"
+            <DetailBlock
+              number="04"
+              title="Explication des termes et passages clés"
             >
-              ← Toutes les séances de Tafsir
-            </Link>
+              {termes.length > 0 ? (
+                <ul className="detail-list">
+                  {termes.map((terme, index) => (
+                    <li key={index}>{terme}</li>
+                  ))}
+                </ul>
+              ) : tafsir.explication ? (
+                <p>{tafsir.explication}</p>
+              ) : (
+                <EmptyContent>
+                  L’explication des termes et passages clés sera ajoutée
+                  prochainement.
+                </EmptyContent>
+              )}
+            </DetailBlock>
 
+            <DetailBlock number="05" title="Les leçons pratiques">
+              {lecons.length > 0 ? (
+                <ul className="detail-list">
+                  {lecons.map((lecon, index) => (
+                    <li key={index}>{lecon}</li>
+                  ))}
+                </ul>
+              ) : (
+                <EmptyContent>
+                  Les leçons pratiques tirées de cette séance seront
+                  ajoutées prochainement.
+                </EmptyContent>
+              )}
+            </DetailBlock>
           </div>
 
+          <div className="detail-footer">
+            <Link to="/tafsir" className="btn btn-secondary">
+              <ArrowLeft size={16} />
+              Toutes les séances de Tafsir
+            </Link>
+          </div>
         </div>
       </section>
     </div>
