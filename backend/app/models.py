@@ -242,6 +242,16 @@ class Soiree(TimestampMixin, db.Model):
         back_populates="soiree",
         cascade="all, delete-orphan",
     )
+    recording_available = db.Column(
+    db.Boolean,
+    default=False,
+    nullable=False
+)
+
+    recording_url = db.Column(
+        db.String(1000),
+        nullable=True
+    )
 
     def to_dict(self, include_media=False):
         data = {
