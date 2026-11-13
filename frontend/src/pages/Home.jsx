@@ -1,3 +1,4 @@
+
 import Hero from '../components/Hero'
 import AboutSection from '../components/AboutSection'
 import ValuesSection from '../components/ValuesSection'
@@ -6,7 +7,6 @@ import FeaturedSession from '../components/FeaturedSession'
 import SoireesPreview from '../components/SoireesPreview'
 import SeriesPreview from '../components/SeriesPreview'
 import GallerySection from '../components/GallerySection'
-import TeamSection from '../components/TeamSection'
 import ContactSection from '../components/ContactSection'
 
 export default function Home() {
@@ -14,14 +14,13 @@ export default function Home() {
     <>
       <Hero />
       <main>
+        <FeaturedSession />
         <AboutSection />
         <ValuesSection />
         <ActivitiesSection />
-        <FeaturedSession />
         <SoireesPreview />
         <SeriesPreview />
         <GallerySection />
-     
         <ContactSection />
       </main>
     </>

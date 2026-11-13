@@ -12,16 +12,13 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
 
+    origins = [item.strip() for item in app.config["FRONTEND_ORIGIN"].split(",") if item.strip()]
     cors.init_app(
         app,
-        resources={
-            r"/api/*": {
-                "origins": app.config["FRONTEND_ORIGIN"]
-            }
-        },
+        resources={r"/api/*": {"origins": origins}},
     )
 
-    from . import models
+    from ...NouroulQuran2.backend.app import models
 
     from .routes.public import public_bp
     from .routes.admin import admin_bp

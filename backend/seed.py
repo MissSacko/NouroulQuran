@@ -1,8 +1,10 @@
 from datetime import date, time
+import os
+import secrets
 
-from app import create_app
-from app.extensions import db
-from app.models import (
+from backend.app import create_app
+from backend.app.extensions import db
+from backend.app.models import (
     User,
     Series,
     Soiree,
@@ -58,7 +60,7 @@ SOIREES = [
             "Une réflexion sur les trois niveaux d'interaction avec le Coran : "
             "le lire, le comprendre et le mettre en pratique."
         ),
-        "series_slug": "ordinaire",
+        "series_slug": None,
     },
     {
         "number": 2,
@@ -72,7 +74,7 @@ SOIREES = [
             "Une réflexion sur l'intention et la sincérité dans "
             "l'apprentissage et la mémorisation du Coran."
         ),
-        "series_slug": "ordinaire",
+        "series_slug": None,
     },
     {
         "number": 3,
@@ -86,7 +88,7 @@ SOIREES = [
             "Comment les enseignements du Coran peuvent-ils transformer "
             "notre manière de nous comporter avec les autres ?"
         ),
-        "series_slug": "ordinaire",
+        "series_slug": None,
     },
     {
         "number": 4,
@@ -100,7 +102,7 @@ SOIREES = [
             "Une découverte du processus de révélation du Coran "
             "au Prophète Muhammad ﷺ."
         ),
-        "series_slug": "ordinaire",
+        "series_slug": None,
     },
     {
         "number": 5,
@@ -114,7 +116,7 @@ SOIREES = [
             "Comprendre la complémentarité entre le Coran et la Sunna "
             "dans la pratique de notre religion."
         ),
-        "series_slug": "ordinaire",
+        "series_slug": None,
     },
     {
         "number": 6,
@@ -128,7 +130,7 @@ SOIREES = [
             "Un moment de partage autour des expériences, difficultés "
             "et conseils liés à la mémorisation du Coran."
         ),
-        "series_slug": "ordinaire",
+        "series_slug": None,
     },
 
     # -------------------------
@@ -224,7 +226,7 @@ SOIREES = [
             "Une réflexion autour du Tawhid et de la signification "
             "profonde de l'attestation de foi."
         ),
-        "series_slug": "ordinaire",
+        "series_slug": None,
     },
     {
         "number": 13,
@@ -238,7 +240,7 @@ SOIREES = [
             "Une réflexion autour du jour de Arafat, de ses mérites "
             "et de la miséricorde d'Allah."
         ),
-        "series_slug": "ordinaire",
+        "series_slug": None,
     },
 
     # -------------------------
@@ -542,9 +544,8 @@ EVENTS = [
         "slug": "ceremonie-lancement",
         "title": "Cérémonie de lancement de Nouroul Qur'An",
         "description": (
-            "Grande cérémonie de lancement de la Communauté Nouroul Qur'An. "
-            "Au programme : conférence, présentation des activités du club, "
-            "tafsir, psalmodie du Coran et jeux concours."
+            "Cérémonie officielle de lancement du club Nouroul Qur’An. "
+            "Au programme : présentation du club, Tafsir, conférence et concours Al-Ilm."
         ),
         "date": date(2026, 12, 19),
         "start_time": time(8, 0),
@@ -564,10 +565,13 @@ EVENTS = [
 
 with app.app_context():
 
-    print("🧹 Nettoyage de la base...")
+    print("🛡️ Vérification de la base...")
 
-    db.drop_all()
     db.create_all()
+    if Series.query.first() or Soiree.query.first() or Tafsir.query.first() or Event.query.first():
+        print("La base contient déjà des contenus : seed interrompu pour éviter toute perte ou duplication.")
+        print("Aucune donnée n’a été supprimée. Utilisez migrate_drive_fields.py pour mettre à jour le schéma.")
+        raise SystemExit(0)
 
     print("🌱 Création des utilisateurs...")
 
@@ -577,7 +581,7 @@ with app.app_context():
         role="admin",
         is_active=True,
     )
-    admin.set_password("ChangeMe123!")
+    admin.set_password(os.getenv("INITIAL_ADMIN_PASSWORD") or secrets.token_urlsafe(32))
 
     db.session.add(admin)
 

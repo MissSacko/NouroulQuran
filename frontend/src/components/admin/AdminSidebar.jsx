@@ -7,6 +7,7 @@ const items = [
   ["Séries", "/admin/series", "◈"],
   ["Tafsirs", "/admin/tafsirs", "☾"],
   ["Événements", "/admin/events", "◆"],
+  ["Messages", "/admin/contacts", "✉"],
 ];
 
 export default function AdminSidebar() {

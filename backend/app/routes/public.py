@@ -1,7 +1,10 @@
 
 from flask import Blueprint, jsonify, request
-from app.models import Series, Soiree, Tafsir, Event
-
+from ..models import Series, Soiree, Tafsir, Event, Surah, ContactSubmission
+from ..extensions import db
+from flask import jsonify, request, current_app
+import os
+import smtplib
 public_bp = Blueprint("public", __name__, url_prefix="/api")
 
 
@@ -136,3 +139,104 @@ def get_event(slug):
         return jsonify({"error": "Événement introuvable"}), 404
 
     return jsonify(item.to_dict())
+
+
+# =====================================================
+# SOURATES (pour les formulaires et le contenu public)
+# =====================================================
+
+@public_bp.get("/surahs")
+def get_surahs():
+    items = Surah.query.order_by(Surah.number.asc()).all()
+    return jsonify([item.to_dict() for item in items])
+
+
+# =====================================================
+# CONTACT
+# =====================================================
+
+from email.message import EmailMessage
+
+
+
+@public_bp.post("/contact")
+def create_contact():
+    data = request.get_json(silent=True) or {}
+
+    name = (data.get("name") or "").strip()
+    email = (data.get("email") or "").strip()
+    phone = (data.get("phone") or "").strip()
+    message = (data.get("message") or "").strip()
+
+    if not all([name, email, phone, message]):
+        return jsonify({
+            "error": "Tous les champs sont obligatoires."
+        }), 400
+
+    if "\n" in email or "\r" in email:
+        return jsonify({
+            "error": "Adresse e-mail invalide."
+        }), 400
+
+    mail_username = current_app.config.get(
+        "MAIL_USERNAME"
+    ) or os.getenv("MAIL_USERNAME")
+
+    mail_password = current_app.config.get(
+        "MAIL_PASSWORD"
+    ) or os.getenv("MAIL_PASSWORD")
+
+    recipient = current_app.config.get(
+        "MAIL_RECIPIENT"
+    ) or os.getenv(
+        "MAIL_RECIPIENT",
+        "nouroulquran225@gmail.com",
+    )
+
+    if not mail_username or not mail_password:
+        current_app.logger.error(
+            "Configuration SMTP incomplète."
+        )
+        return jsonify({
+            "error": "Le service d'envoi est momentanément indisponible."
+        }), 503
+
+    mail = EmailMessage()
+    mail["Subject"] = f"Nouveau message du site Nouroul Qur’An — {name}"
+    mail["From"] = mail_username
+    mail["To"] = recipient
+    mail["Reply-To"] = email
+
+    mail.set_content(
+        f"""Nouveau message reçu depuis le site Nouroul Qur’An.
+
+Nom : {name}
+Adresse e-mail : {email}
+Téléphone : {phone}
+
+Message :
+{message}
+"""
+    )
+
+    try:
+        with smtplib.SMTP(
+            os.getenv("MAIL_SERVER", "smtp.gmail.com"),
+            int(os.getenv("MAIL_PORT", "587")),
+            timeout=20,
+        ) as server:
+            server.starttls()
+            server.login(mail_username, mail_password)
+            server.send_message(mail)
+
+    except (OSError, smtplib.SMTPException):
+        current_app.logger.exception(
+            "Échec de l'envoi du formulaire de contact."
+        )
+        return jsonify({
+            "error": "Impossible d'envoyer le message pour le moment."
+        }), 502
+
+    return jsonify({
+        "message": "Votre message a bien été envoyé au club Nouroul Qur’An."
+    }), 200

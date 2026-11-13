@@ -1,5 +1,5 @@
 
-const API_URL = "http://localhost:5000/api";
+  const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000/api");
 
 // =====================================================
 // CLÉ ADMINISTRATEUR — AUTHENTIFICATION TEMPORAIRE
@@ -21,6 +21,11 @@ export function removeAdminKey() {
 
 export function isAdminAuthenticated() {
   return Boolean(getAdminKey());
+}
+
+export async function verifyAdminKey(key = getAdminKey()) {
+  if (!key) throw new Error("Clé administrateur manquante.");
+  return request(`${API_URL}/admin/verify`, { headers: { "X-Admin-Key": key } });
 }
 
 // =====================================================
@@ -78,12 +83,14 @@ export async function getSeries() {
 }
 
 export async function getSerieBySlug(slug) {
-  return request(`${API_URL}/series/${slug}`);
+  return request(`${API_URL}/series/${encodeURIComponent(slug)}`);
 }
 
 // =====================================================
 // SÉRIES — ADMIN
 // =====================================================
+
+export async function getAdminSeries() { return adminRequest("/series"); }
 
 export async function createSeries(data) {
   return adminRequest("/series", {
@@ -129,12 +136,14 @@ export async function getSoirees(params = {}) {
 }
 
 export async function getSoireeBySlug(slug) {
-  return request(`${API_URL}/soirees/${slug}`);
+  return request(`${API_URL}/soirees/${encodeURIComponent(slug)}`);
 }
 
 // =====================================================
 // SOIRÉES — ADMIN
 // =====================================================
+
+export async function getAdminSoirees() { return adminRequest("/soirees"); }
 
 export async function createSoiree(data) {
   return adminRequest("/soirees", {
@@ -165,12 +174,18 @@ export async function getTafsirs() {
 }
 
 export async function getTafsirBySlug(slug) {
-  return request(`${API_URL}/tafsirs/${slug}`);
+  return request(`${API_URL}/tafsirs/${encodeURIComponent(slug)}`);
+}
+
+export async function getSurahs() {
+  return request(`${API_URL}/surahs`);
 }
 
 // =====================================================
 // TAFSIRS — ADMIN
 // =====================================================
+
+export async function getAdminTafsirs() { return adminRequest("/tafsirs"); }
 
 export async function createTafsir(data) {
   return adminRequest("/tafsirs", {
@@ -205,12 +220,14 @@ export async function getUpcomingEvents() {
 }
 
 export async function getEventBySlug(slug) {
-  return request(`${API_URL}/events/${slug}`);
+  return request(`${API_URL}/events/${encodeURIComponent(slug)}`);
 }
 
 // =====================================================
 // ÉVÉNEMENTS — ADMIN
 // =====================================================
+
+export async function getAdminEvents() { return adminRequest("/events"); }
 
 export async function createEvent(data) {
   return adminRequest("/events", {
@@ -231,3 +248,13 @@ export async function deleteEvent(id) {
     method: "DELETE",
   });
 }
+
+
+// CONTACT
+export async function submitContact(data) {
+  return request(`${API_URL}/contact`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+}
+export async function getAdminContacts() { return adminRequest("/contacts"); }
+export async function updateAdminContact(id, data) { return adminRequest(`/contacts/${id}`, { method: "PATCH", body: JSON.stringify(data) }); }
+export async function deleteAdminContact(id) { return adminRequest(`/contacts/${id}`, { method: "DELETE" }); }
+ 

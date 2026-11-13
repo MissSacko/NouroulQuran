@@ -10,8 +10,8 @@ export const values = [
 export const activities = [
   ['📖', 'Tafsir & Méditation', 'Des séances guidées pour éclairer les versets et leur résonance.', '/tafsir'],
   ['☾', 'Soirées Nouroul Qur\u2019an', 'Des rencontres profondes, ouvertes et ancrées dans la communauté.', '/soirees'],
-  ['◉', 'Conférences & échanges', 'Des voix et des perspectives pour nourrir notre réflexion.', '/#contact'],
-  ['🤝', 'Vie communautaire', 'Des moments simples pour tisser une fraternité durable.', '/#galerie'],
+  ['🤝', 'Actions de solidarité', 'Des collectes de fonds pour soutenir les personnes dans le besoin, notamment à travers les dons réalisés durant le Ramadan passé.', '/#galerie'],
+  ['📚', 'Journée du Coran', 'Une journée spéciale dédiée au Livre d’Allah, à sa lecture, sa méditation et sa compréhension.', '/#contact'],
 ]
 
 export const gallery = [

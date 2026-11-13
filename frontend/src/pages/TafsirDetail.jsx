@@ -3,12 +3,9 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
-  BookOpen,
   CalendarDays,
   MapPin,
   UserRound,
-  Landmark,
-  BookMarked,
 } from "lucide-react";
 import { getTafsirBySlug } from "../services/api";
 import PageHeaderr from "../components/PageHeaderr";
@@ -87,7 +84,7 @@ export default function TafsirDetail() {
         <PageHeaderr
           eyebrow="Nouroul Qur’An"
           title="Chargement du Tafsir"
-          description="Nous préparons le contenu de cette séance."
+          text="Nous préparons le contenu de cette séance."
         />
         <section className="section">
           <div className="container">
@@ -104,7 +101,7 @@ export default function TafsirDetail() {
         <PageHeaderr
           eyebrow="Tafsir"
           title="Séance introuvable"
-          description={
+          text={
             error ||
             "Cette séance n'existe pas ou n'est plus disponible."
           }
@@ -150,7 +147,7 @@ export default function TafsirDetail() {
       <PageHeaderr
         eyebrow="Nouroul Qur’An · Séance de Tafsir"
         title={sourate.name || "Étude du Coran"}
-        description={
+        text={
           tafsir.description ||
           "Méditons sur les versets du Coran et approfondissons leur compréhension."
         }
@@ -208,26 +205,25 @@ export default function TafsirDetail() {
 
               <p>
                 <strong>Nombre de versets :</strong>{" "}
-                {sourate.verses_count ??
-                  sourate.nombre_versets ??
+                {sourate.verse_count ??
                   "Non renseigné"}
               </p>
 
               <p>
                 <strong>Raison de l’appellation :</strong>{" "}
-                {sourate.raison_appellation ||
+                {sourate.appellation_reason ||
                   "Cette information sera ajoutée prochainement."}
               </p>
 
               <p>
                 <strong>Ordre de révélation :</strong>{" "}
-                {sourate.ordre_revelation ||
+                {sourate.revelation_order ??
                   "Cette information sera ajoutée prochainement."}
               </p>
 
               <p>
                 <strong>Type :</strong>{" "}
-                {sourate.type ||
+                {sourate.revelation_type ||
                   "Cette information sera ajoutée prochainement."}
               </p>
             </DetailBlock>

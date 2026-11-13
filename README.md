@@ -75,16 +75,56 @@ frontend/src/
 Pages disponibles :
 - `/` — accueil (aperçu de 3 soirées et 3 séries, avec boutons « voir tout »)
 - `/soirees` — liste complète des soirées, avec filtres
-- `/soirees/:slug` — détail d'une soirée (lecteur audio ou vidéo)
+- `/soirees/:slug` — détail d’une soirée et accès à son enregistrement Google Drive si disponible
 - `/series` — liste de toutes les séries thématiques
 - `/series/:slug` — détail d'une série + liste des soirées qui la composent
-- `/tafsir` — liste complète des séances de tafsir
+- `/tafsir` — liste complète des séances de Tafsir
+- `/tafsir/:slug` — détail d’une séance de Tafsir
+- `/admin/login` — connexion administrateur
+- `/admin/dashboard` — tableau de bord
+- `/admin/soirees`, `/admin/series`, `/admin/tafsirs`, `/admin/events` — gestion des contenus
+- `/admin/contacts` — messages reçus depuis le formulaire de contact
 
 ## Personnalisation
 
-- Contenu : `frontend/src/data/*.js` — chaque soirée, série, valeur, etc.
-  est un objet simple à éditer.
+- Contenus administrables : les séries, soirées, Tafsirs et événements sont lus depuis l’API Flask et gérés dans le dashboard. Les sections éditoriales fixes de la page d’accueil (valeurs et activités) restent dans `frontend/src/data/content.js`.
 - Couleurs / typographies : variables CSS en haut de
   `frontend/src/styles.css` (`--deep`, `--gold`, `--ivory`, etc.).
-- Images/audio/vidéo des soirées : `frontend/public/media/` — voir le
-  `README.md` de ce dossier pour la convention de nommage des fichiers.
+- Les enregistrements des soirées sont hébergés sur Google Drive. Le site stocke uniquement les liens de partage dans la base de données ; aucune vidéo n’est téléversée dans le projet.
+
+
+## Mise en route locale — version finalisée
+
+### Backend Flask
+
+1. Ouvrir un terminal dans `backend/`.
+2. Créer et activer un environnement virtuel, puis installer `requirements.txt`.
+3. Copier `.env.example` vers `.env` et remplacer `ADMIN_API_KEY` par une clé longue et aléatoire. Ne partagez jamais ce fichier.
+4. Lancer `python migrate_drive_fields.py`. Ce script crée les tables absentes et ajoute les colonnes Drive manquantes sans supprimer les contenus existants.
+5. Lancer `python run.py`. L’API locale est disponible sur `http://localhost:5000/api`.
+
+Le script `seed.py` n’efface plus la base. Il s’arrête s’il détecte déjà des contenus, pour éviter de dupliquer ou supprimer des données.
+
+### Frontend React
+
+1. Ouvrir un autre terminal dans `frontend/`.
+2. Lancer `npm ci`.
+3. Copier `.env.example` vers `.env` si l’API n’est pas à l’adresse locale par défaut, puis définir `VITE_API_URL`.
+4. Lancer `npm run dev`.
+
+### Administration
+
+Ouvrir `/admin/login` et saisir la valeur de `ADMIN_API_KEY` définie dans le `.env` du backend. Le dashboard permet de gérer les séries, soirées, Tafsirs et événements. Les pages d’administration vérifient la clé auprès du serveur avant d’afficher les contenus.
+
+### Google Drive
+
+- Dans **Séries**, renseigner le lien du dossier Google Drive contenant les enregistrements de la série.
+- Dans **Soirées**, renseigner le lien individuel de l’enregistrement et cocher « Enregistrement disponible ». Le site n’affiche le bouton de lecture que si la case est cochée et qu’un lien existe.
+- Les liens doivent être partagés avec les droits adaptés (par exemple « Toute personne disposant du lien » si la diffusion publique est voulue). Les fichiers vidéo restent hébergés sur Google Drive, pas dans la base de données.
+
+### Vérifications avant mise en production
+
+- Remplacer `ADMIN_API_KEY` par une clé forte et garder le fichier `.env` hors du dépôt.
+- Configurer `FRONTEND_ORIGIN` et `VITE_API_URL` avec les domaines de déploiement réels.
+- Vérifier que la base a été migrée avant de démarrer l’application.
+- Vérifier les autorisations de partage des liens Google Drive et tester chaque page sur mobile.

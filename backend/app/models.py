@@ -110,12 +110,18 @@ class Series(TimestampMixin, db.Model):
         nullable=True,
     )
 
+    # Présentation éditoriale enrichie de la série
+    introduction = db.Column(db.Text, nullable=True)
+    objectives = db.Column(db.JSON, nullable=True)
+    drive_folder_url = db.Column(db.String(1000), nullable=True)
+
+    # Conservé pour compatibilité avec les données existantes
     category = db.Column(
         db.String(150),
         nullable=True,
     )
 
-    # URL MinIO / AWS S3
+    # Image facultative (URL distante)
     cover_image = db.Column(
         db.String(1000),
         nullable=True,
@@ -140,9 +146,13 @@ class Series(TimestampMixin, db.Model):
             "title": self.title,
             "subtitle": self.subtitle,
             "description": self.description,
+            "introduction": self.introduction,
+            "objectives": self.objectives or [],
+            "drive_folder_url": self.drive_folder_url,
             "category": self.category,
             "cover_image": self.cover_image,
             "is_published": self.is_published,
+            "soiree_count": sum(1 for soiree in self.soirees if soiree.is_published),
         }
 
         if include_soirees:
@@ -243,14 +253,14 @@ class Soiree(TimestampMixin, db.Model):
         cascade="all, delete-orphan",
     )
     recording_available = db.Column(
-    db.Boolean,
-    default=False,
-    nullable=False
-)
+        db.Boolean,
+        default=False,
+        nullable=False,
+    )
 
     recording_url = db.Column(
         db.String(1000),
-        nullable=True
+        nullable=True,
     )
 
     def to_dict(self, include_media=False):
@@ -267,6 +277,9 @@ class Soiree(TimestampMixin, db.Model):
             "description": self.description,
             "cover_image": self.cover_image,
             "is_published": self.is_published,
+            "series_id": self.series_id,
+            "recording_available": self.recording_available,
+            "recording_url": self.recording_url,
             "series": (
                 {
                     "id": self.series.id,

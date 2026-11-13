@@ -10,6 +10,7 @@ from ..models import (
     Tafsir,
     Surah,
     Event,
+    ContactSubmission,
 )
 
 
@@ -23,9 +24,12 @@ admin_bp = Blueprint("admin", __name__)
 def check_admin_key():
     provided_key = request.headers.get("X-Admin-Key")
 
-    return (
+    configured_key = Config.ADMIN_API_KEY
+    return bool(
         provided_key
-        and provided_key == Config.ADMIN_API_KEY
+        and configured_key
+        and configured_key.lower() not in {"change-me", "changeme", "change_me", "remplace-moi-par-une-cle-longue-et-aleatoire", ""}
+        and provided_key == configured_key
     )
 
 
@@ -33,6 +37,13 @@ def unauthorized():
     return jsonify({
         "error": "Accès administrateur requis."
     }), 401
+
+
+@admin_bp.get("/verify")
+def verify_admin_key():
+    if not check_admin_key():
+        return unauthorized()
+    return jsonify({"authenticated": True})
 
 
 # ============================================================
@@ -57,6 +68,78 @@ def parse_time(value):
         return time.fromisoformat(value)
     except (ValueError, TypeError):
         return None
+
+
+
+
+# ============================================================
+# LISTES ADMIN (incluent les brouillons)
+# ============================================================
+
+@admin_bp.get("/series")
+def admin_get_series():
+    if not check_admin_key():
+        return unauthorized()
+    items = Series.query.order_by(Series.updated_at.desc()).all()
+    return jsonify([item.to_dict() for item in items])
+
+
+@admin_bp.get("/soirees")
+def admin_get_soirees():
+    if not check_admin_key():
+        return unauthorized()
+    items = Soiree.query.order_by(Soiree.number.asc(), Soiree.date.desc()).all()
+    return jsonify([item.to_dict() for item in items])
+
+
+@admin_bp.get("/tafsirs")
+def admin_get_tafsirs():
+    if not check_admin_key():
+        return unauthorized()
+    items = Tafsir.query.order_by(Tafsir.date.desc()).all()
+    return jsonify([item.to_dict() for item in items])
+
+
+@admin_bp.get("/events")
+def admin_get_events():
+    if not check_admin_key():
+        return unauthorized()
+    items = Event.query.order_by(Event.date.desc()).all()
+    return jsonify([item.to_dict() for item in items])
+
+
+@admin_bp.get("/contacts")
+def admin_get_contacts():
+    if not check_admin_key():
+        return unauthorized()
+    items = ContactSubmission.query.order_by(ContactSubmission.created_at.desc()).all()
+    return jsonify([item.to_dict() for item in items])
+
+
+@admin_bp.patch("/contacts/<int:contact_id>")
+def admin_update_contact(contact_id):
+    if not check_admin_key():
+        return unauthorized()
+    item = db.session.get(ContactSubmission, contact_id)
+    if not item:
+        return jsonify({"error": "Message introuvable."}), 404
+    data = request.get_json(silent=True) or {}
+    if "is_processed" in data:
+        item.is_processed = bool(data["is_processed"])
+    db.session.commit()
+    return jsonify(item.to_dict())
+
+
+@admin_bp.delete("/contacts/<int:contact_id>")
+def admin_delete_contact(contact_id):
+    if not check_admin_key():
+        return unauthorized()
+    item = db.session.get(ContactSubmission, contact_id)
+    if not item:
+        return jsonify({"error": "Message introuvable."}), 404
+    db.session.delete(item)
+    db.session.commit()
+    return jsonify({"message": "Message supprimé."})
 
 
 # ============================================================
@@ -86,6 +169,9 @@ def create_series():
         slug=data["slug"],
         subtitle=data.get("subtitle"),
         description=data.get("description"),
+        introduction=data.get("introduction"),
+        objectives=data.get("objectives") or [],
+        drive_folder_url=data.get("drive_folder_url"),
         category=data.get("category"),
         cover_image=data.get("cover_image"),
         is_published=data.get("is_published", True),
@@ -128,6 +214,9 @@ def update_series(series_id):
         "title",
         "subtitle",
         "description",
+        "introduction",
+        "objectives",
+        "drive_folder_url",
         "category",
         "cover_image",
         "is_published",
@@ -232,6 +321,8 @@ def create_soiree():
         summary=data.get("summary"),
         description=data.get("description"),
         cover_image=data.get("cover_image"),
+        recording_available=bool(data.get("recording_available", False)),
+        recording_url=data.get("recording_url") or None,
         series=series,
         is_published=data.get("is_published", True),
     )
@@ -347,6 +438,8 @@ def update_soiree(soiree_id):
         "summary",
         "description",
         "cover_image",
+        "recording_available",
+        "recording_url",
         "is_published",
     ]
 
@@ -357,6 +450,9 @@ def update_soiree(soiree_id):
                 field,
                 data[field],
             )
+
+    if not soiree.recording_url:
+        soiree.recording_available = False
 
     db.session.commit()
 

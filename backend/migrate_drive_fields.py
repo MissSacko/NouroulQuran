@@ -2,8 +2,8 @@
 Lancer depuis backend/: python migrate_drive_fields.py
 """
 from sqlalchemy import inspect, text
-from app import create_app
-from app.extensions import db
+from backend.app import create_app
+from backend.app.extensions import db
 
 COLUMNS = {
     "series": {

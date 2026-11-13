@@ -11,7 +11,6 @@ export default function Navbar() {
     ['Séries', '/series'],
     ['Tafsir', '/tafsir'],
     ['Galerie', '/#galerie'],
-    ['Équipe', '/#equipe'],
   ]
 
   return (
