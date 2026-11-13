@@ -18,7 +18,7 @@ def create_app():
         resources={r"/api/*": {"origins": origins}},
     )
 
-    from ...NouroulQuran2.backend.app import models
+    from backend.app import models
 
     from .routes.public import public_bp
     from .routes.admin import admin_bp
