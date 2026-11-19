@@ -8,7 +8,7 @@ export default function AboutSection() {
         <FadeIn>
           <div className="image-frame">
             <img
-              src="https://images.unsplash.com/photo-1542816417-0983c9c9ad53?auto=format&fit=crop&w=1200&q=85"
+              src="https://cdn.pixabay.com/photo/2022/08/19/16/55/quran-7397296_1280.jpg"
               alt="Étude du Coran"
             />
           </div>

@@ -1,53 +1,30 @@
-
 import { useEffect, useState } from 'react'
 import {
+  ArrowDownRight,
   ArrowRight,
   CalendarDays,
+  Check,
   Clock3,
   ExternalLink,
   MapPin,
   Sparkles,
+  X,
 } from 'lucide-react'
-import { Link } from 'react-router-dom'
 import { getUpcomingEvents } from '../services/api'
 
-const posterSlides = [
-  {
-    label: 'Cérémonie officielle',
-    title: 'Nouroul Qur’An',
-    subtitle: 'Une lumière pour les cœurs',
-    detail: '19 DÉCEMBRE',
-    symbol: '۞',
-    style: 'poster-main',
-  },
-  {
-    label: 'Grande conférence',
-    title: 'Comprendre le Coran',
-    subtitle: 'Les bienfaits de sa compréhension dans la vie du croyant',
-    detail: 'CONFÉRENCE',
-    symbol: '☾',
-    style: 'poster-conference',
-  },
-  {
-    label: 'Tafsir & méditation',
-    title: 'Un cœur vivant par le Coran',
-    subtitle: 'Méditons sur les versets du Coran',
-    detail: 'TAFSIR',
-    symbol: '۩',
-    style: 'poster-tafsir',
-  },
-  {
-    label: 'Concours Al-Ilm',
-    title: 'Le savoir nous élève',
-    subtitle: 'Apprendre, comprendre et transmettre',
-    detail: 'CONCOURS AL-ILM',
-    symbol: '✦',
-    style: 'poster-contest',
-  },
+const PROGRAMME = [
+  'Présentation du club Nouroul Qur’An',
+  'Tafsir et méditation',
+  'Conférence',
+  'Concours Al-Ilm',
 ]
 
 function getRemaining(date, time) {
+  if (!date) return null
+
   const target = new Date(`${date}T${time || '00:00'}:00`)
+  if (Number.isNaN(target.getTime())) return null
+
   const distance = Math.max(0, target.getTime() - Date.now())
 
   return {
@@ -68,18 +45,30 @@ function formatDate(value) {
   }).format(new Date(`${value}T12:00:00`))
 }
 
+function getDateParts(value) {
+  if (!value) return { day: '—', month: '', year: '' }
+
+  const date = new Date(`${value}T12:00:00`)
+  if (Number.isNaN(date.getTime())) return { day: '—', month: '', year: '' }
+
+  return {
+    day: new Intl.DateTimeFormat('fr-FR', { day: '2-digit' }).format(date),
+    month: new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(date),
+    year: new Intl.DateTimeFormat('fr-FR', { year: 'numeric' }).format(date),
+  }
+}
+
 export default function FeaturedSession() {
   const [event, setEvent] = useState(null)
   const [remaining, setRemaining] = useState(null)
-  const [activePoster, setActivePoster] = useState(0)
+  const [programmeOpen, setProgrammeOpen] = useState(false)
 
   useEffect(() => {
     let active = true
 
     getUpcomingEvents()
       .then((events) => {
-        const next =
-          events.find((item) => item.countdown_enabled) || events[0]
+        const next = events.find((item) => item.countdown_enabled) || events[0]
 
         if (active && next) {
           setEvent(next)
@@ -105,138 +94,129 @@ export default function FeaturedSession() {
     return () => window.clearInterval(timer)
   }, [event])
 
-  // Défilement automatique des affiches, indépendamment du compte à rebours.
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setActivePoster((current) => (current + 1) % posterSlides.length)
-    }, 4200)
-
-    return () => window.clearInterval(timer)
-  }, [])
-
   if (!event) return null
 
-  const poster = posterSlides[activePoster]
+  const dateParts = getDateParts(event.date)
 
   return (
-    <section className="featured-section event-featured" id="evenement">
-      <div className="container featured-grid">
-
-        {/* GAUCHE : vitrine animée des affiches */}
-        <div className="event-featured-art" aria-label="Affiches de la cérémonie">
-          <div className="poster-glow" />
-
-          <div className="poster-stack" key={poster.style}>
-            <div className="poster-card poster-card-back" />
-            <div className="poster-card poster-card-middle" />
-
-            <article className={`poster-card poster-card-front ${poster.style}`}>
-              <span className="poster-topline">
-                <Sparkles size={13} />
-                {poster.label}
-              </span>
-
-              <div className="poster-emblem" aria-hidden="true">
-                {poster.symbol}
-              </div>
-
-              <div className="poster-copy">
-                <span className="poster-mini-brand">CLUB NOUROUL QUR’AN</span>
-                <h3>{poster.title}</h3>
-                <p>{poster.subtitle}</p>
-              </div>
-
-              <div className="poster-bottom">
-                <span>{poster.detail}</span>
-                <span className="poster-bottom-line" />
-                <span>2026</span>
-              </div>
-            </article>
-          </div>
-
-          <div className="poster-pagination" aria-label="Affiche affichée">
-            {posterSlides.map((item, index) => (
-              <span
-                key={item.style}
-                className={`poster-pagination-dot ${
-                  index === activePoster ? 'is-active' : ''
-                }`}
-              />
-            ))}
-          </div>
-
-          <span className="poster-caption">
-            Méditons sur les versets du Coran
+    <section className="featured-section event-editorial" id="evenement">
+      <div className="container event-editorial-inner">
+        <div className="event-editorial-heading">
+          <span className="event-editorial-kicker">
+            <span />
+            À inscrire dans vos agendas
           </span>
+          <span className="event-editorial-index">NOURoul QUR’AN · ÉVÉNEMENT</span>
         </div>
 
-        {/* DROITE : informations réelles de l'événement */}
-        <div className="event-featured-info">
-          <div className="eyebrow">
-            Prochain rendez-vous Nouroul Qur’An
-          </div>
-
-          <h2 className="serif">{event.title}</h2>
-          <p>{event.description}</p>
-
-          <div className="meta-row">
-            <span>
-              <CalendarDays size={15} />
-              {formatDate(event.date)}
-            </span>
-
-            {event.location && (
-              <span>
-                <MapPin size={15} />
-                {event.location}
-              </span>
-            )}
-
-            {event.start_time && (
-              <span>
-                <Clock3 size={15} />
-                {event.start_time}
-              </span>
-            )}
-          </div>
-
-          {event.countdown_enabled && remaining && (
-            <div className="event-countdown" aria-label="Compte à rebours">
-              <div>
-                <strong>{remaining.days}</strong>
-                <span>jours</span>
-              </div>
-              <div>
-                <strong>{String(remaining.hours).padStart(2, '0')}</strong>
-                <span>heures</span>
-              </div>
-              <div>
-                <strong>{String(remaining.minutes).padStart(2, '0')}</strong>
-                <span>minutes</span>
-              </div>
-              <div>
-                <strong>{String(remaining.seconds).padStart(2, '0')}</strong>
-                <span>secondes</span>
-              </div>
+        <div className="event-editorial-grid">
+          <aside className="event-date-art" aria-label={`Date : ${formatDate(event.date)}`}>
+            <div className="event-date-art-top">
+              <Sparkles size={15} />
+              <span>Une rencontre, une intention</span>
             </div>
-          )}
 
-          <div className="event-actions">
-            {event.registration_enabled && (
-              <a
-                className="button gold"
-                href={event.registration_url || '/#contact'}
-                target={event.registration_url ? '_blank' : undefined}
-                rel={event.registration_url ? 'noreferrer' : undefined}
-              >
-                S’inscrire <ExternalLink size={15} />
-              </a>
+            <div className="event-date-art-main">
+              <span className="event-date-month">{dateParts.month}</span>
+              <strong>{dateParts.day}</strong>
+              <span className="event-date-year">{dateParts.year}</span>
+            </div>
+
+            <div className="event-date-art-bottom">
+              <span className="event-date-ornament">۞</span>
+              <span>Méditons sur les versets du Coran</span>
+            </div>
+          </aside>
+
+          <div className="event-editorial-content">
+            <span className="eyebrow">Prochain rendez-vous Nouroul Qur’An</span>
+            <h2 className="serif">{event.title}</h2>
+            {event.description && <p className="event-editorial-description">{event.description}</p>}
+
+            <div className="event-editorial-meta">
+              <div>
+                <CalendarDays size={17} />
+                <span>{formatDate(event.date)}</span>
+              </div>
+              {event.start_time && (
+                <div>
+                  <Clock3 size={17} />
+                  <span>{event.start_time}</span>
+                </div>
+              )}
+              {event.location && (
+                <div className="event-editorial-location">
+                  <MapPin size={17} />
+                  <span>{event.location}</span>
+                </div>
+              )}
+            </div>
+
+            {event.countdown_enabled && remaining && (
+              <div className="event-editorial-countdown" aria-label="Compte à rebours">
+                <div className="event-countdown-label">Le rendez-vous approche</div>
+                <div className="event-countdown-units">
+                  {[
+                    ['jours', remaining.days],
+                    ['heures', remaining.hours],
+                    ['minutes', remaining.minutes],
+                    ['secondes', remaining.seconds],
+                  ].map(([label, value]) => (
+                    <div className="event-countdown-unit" key={label}>
+                      <strong>{String(value).padStart(2, '0')}</strong>
+                      <span>{label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
 
-            <Link className="button outline" to="/soirees">
-              Explorer les soirées <ArrowRight size={16} />
-            </Link>
+            <div className="event-editorial-actions">
+              <button
+                type="button"
+                className="event-programme-button"
+                onClick={() => setProgrammeOpen((open) => !open)}
+                aria-expanded={programmeOpen}
+              >
+                {programmeOpen ? 'Masquer le programme' : 'Découvrir le programme'}
+                {programmeOpen ? <X size={17} /> : <ArrowDownRight size={17} />}
+              </button>
+
+              {event.registration_enabled && (
+                <a
+                  className="event-registration-link"
+                  href={event.registration_url || '/#contact'}
+                  target={event.registration_url ? '_blank' : undefined}
+                  rel={event.registration_url ? 'noreferrer' : undefined}
+                >
+                  S’inscrire <ExternalLink size={15} />
+                </a>
+              )}
+            </div>
+
+            {programmeOpen && (
+              <div className="event-programme-panel">
+                <div className="event-programme-panel-heading">
+                  <span>Au programme</span>
+                  <span>01 — 04</span>
+                </div>
+                <ol>
+                  {PROGRAMME.map((item) => (
+                    <li key={item}>
+                      <Check size={16} />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
           </div>
+        </div>
+
+        <div className="event-editorial-footer">
+          <span>Club Nouroul Qur’An</span>
+          <span>Un moment de savoir et de spiritualité</span>
+          <ArrowRight size={16} />
         </div>
       </div>
     </section>
